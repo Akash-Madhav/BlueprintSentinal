@@ -4,18 +4,31 @@ This document covers the setup, execution, and verification steps for the BluePr
 
 ## Setup
 
-1. **Install backend dependencies:**
+1. **Create and activate a virtual environment:**
    ```bash
-   pip install -r requirements.txt
+   # Windows
+   python -m venv .venv
+   .\.venv\Scripts\activate
+
+   # macOS / Linux
+   python3 -m venv .venv
+   source .venv/bin/activate
    ```
 
-2. **Download Models:**
-   Run the setup script to download the required LLM, vision, and OCR models into the `models/` directory. All models are loaded from the local disk at runtime to ensure a fully offline system.
+2. **Install backend dependencies:**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   cd ..
+   ```
+
+3. **Download Models:**
+   Run the setup script to download the required LLM, vision, and OCR models into the `models/` directory:
    ```bash
    python scripts/download_models.py
    ```
 
-3. **Install frontend dependencies:**
+4. **Install frontend dependencies:**
    ```bash
    cd frontend
    npm install
@@ -27,7 +40,11 @@ This document covers the setup, execution, and verification steps for the BluePr
 ### 1. Start the Backend (FastAPI)
 The backend runs on Python and provides the API for the application.
 ```bash
-uvicorn backend.main:app --reload
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+```
+or simply:
+```bash
+python -m backend.main
 ```
 The API will be available at `http://localhost:8000`.
 
