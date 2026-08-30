@@ -1,0 +1,43 @@
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+venv/
+.venv/
+
+# Downloaded Models (Do not commit large model weights)
+models/llm/*
+models/vision/*
+models/ocr/*
+!models/README.md
+
+# Frontend / Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDEs / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
