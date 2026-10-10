@@ -1,3 +1,0 @@
-"""
-BluePrint Sentinel Pipeline Layers
-"""

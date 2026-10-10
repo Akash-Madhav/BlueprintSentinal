@@ -45,13 +45,13 @@ export default function UploadView({ onStartAudit }) {
   const loadDemoSet = async () => {
     setLoadingDemo(true);
     try {
-      // Fetch genuine blueprint samples served directly by backend
-      const resP = await fetch('http://localhost:8000/samples/demo_floor_plan_office.png');
+      // Fetch genuine blueprint samples served directly by Vite from public/samples
+      const resP = await fetch('/samples/demo_floor_plan_office.png');
       const blobP = await resP.blob();
       const fileP = new File([blobP], 'demo_floor_plan_office.png', { type: 'image/png' });
       setPrimaryWithPreview(fileP);
 
-      const resS = await fetch('http://localhost:8000/samples/demo_electrical_diagram.png');
+      const resS = await fetch('/samples/demo_electrical_diagram.png');
       const blobS = await resS.blob();
       const fileS = new File([blobS], 'demo_electrical_diagram.png', { type: 'image/png' });
       setSecondaryWithPreview(fileS);

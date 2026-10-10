@@ -9,24 +9,17 @@ const PIPELINE_STEPS = [
   { id: 5, title: 'Layer 5: Cross-Verification & Resilience Grading', desc: 'Consolidates findings, grounds graph elements & generates composite safety grade', icon: CheckCircle2 },
 ];
 
-export default function ProgressView() {
-  const [currentStep, setCurrentStep] = useState(1);
+export default function ProgressView({ progress }) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsed((prev) => prev + 1);
     }, 1000);
-
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => (prev < 5 ? prev + 1 : 5));
-    }, 1100);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(stepInterval);
-    };
+    return () => clearInterval(timer);
   }, []);
+
+  const currentStep = progress?.step || 1;
 
   return (
     <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center' }}>
@@ -35,8 +28,9 @@ export default function ProgressView() {
           Autonomous Audit In Progress
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          Executing five-layer verification pipeline on local hardware. Zero external network telemetry.
+          Executing five-layer verification pipeline with Google Gemini Multimodal AI.
         </p>
+
 
         {/* Live Execution Telemetry Bar */}
         <div style={{

@@ -100,31 +100,58 @@ export default function ReportView({ report, onReset, onShowYourWork }) {
     downloadAnchor.remove();
   };
 
-  const handleExportMarkdown = async () => {
-    try {
-      const res = await fetch(`http://localhost:8000/export/${report.session_id}/markdown`);
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `blueprint_sentinel_report_${report.session_id.slice(0, 8)}.md`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } else {
-        handleExportJSON();
-      }
-    } catch {
-      handleExportJSON();
-    }
+  const handleExportMarkdown = () => {
+    const lines = [
+      `# BluePrint Sentinel — Critical Infrastructure Audit Report`,
+      `**Session ID:** \`${report.session_id}\``,
+      `**Plan Typologies Audited:** ${report.plan_types?.join(' + ')}`,
+      `**Engine:** Google Gemini Multimodal Vision & Client-Side Verification`,
+      ``,
+      `---`,
+      ``,
+      `## Executive Summary & Resilience Grade`,
+      `- **Overall Resilience Score:** ${metrics.overall_score} / 100`,
+      `- **Safety & Compliance Grade:** **Grade ${metrics.grade}**`,
+      `- **Architectural Life Safety:** ${metrics.discipline_scores?.architectural}%`,
+      `- **Electrical Redundancy:** ${metrics.discipline_scores?.electrical}%`,
+      `- **Cyber-Physical Isolation:** ${metrics.discipline_scores?.cyber_physical}%`,
+      ``,
+      `> ${metrics.executive_summary}`,
+      ``,
+      `---`,
+      ``,
+      `## Itemized Audit Findings (${findings.length} Total)`,
+      ``,
+    ];
+
+    findings.forEach((f, i) => {
+      lines.push(
+        `### ${i + 1}. [${f.severity.toUpperCase()}] ${f.title}`,
+        `- **Confidence:** ${Math.round(f.confidence * 100)}% | **Contributing Layers:** ${f.contributing_layers?.join(' + ')}`,
+        `- **Regulatory Standard:** \`${f.regulatory_code || 'N/A'}\``,
+        `- **Grounded Assets:** ${f.element_ids?.map((id) => '#' + id).join(', ')}`,
+        `- **Explanation:** ${f.explanation}`,
+        `- **Recommended Remediation:** *${f.remediation || 'N/A'}*`,
+        ``
+      );
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `blueprint_sentinel_report_${report.session_id.slice(0, 8)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   // Determine current active plan image and manifest
-  const primaryImgUrl = report.primary_image_url || 'http://localhost:8000/samples/demo_floor_plan_office.png';
-  const secondaryImgUrl = report.secondary_image_url || 'http://localhost:8000/samples/demo_electrical_diagram.png';
+  const primaryImgUrl = report.primary_image_url || '/samples/demo_floor_plan_office.png';
+  const secondaryImgUrl = report.secondary_image_url || '/samples/demo_electrical_diagram.png';
   const hasSecondary = report.plan_types?.length > 1;
   const currentPlanImage = activePlanTab === 'primary' ? primaryImgUrl : secondaryImgUrl;
+
 
   // Collect bounding box overlays for current view
   const elementsManifest = report.elements_manifest || [];

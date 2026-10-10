@@ -1,55 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, HardDrive, WifiOff, AlertCircle } from 'lucide-react';
+import { Shield, Key, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 import UploadView from './components/UploadView.jsx';
 import ProgressView from './components/ProgressView.jsx';
 import ReportView from './components/ReportView.jsx';
 import ShowYourWorkModal from './components/ShowYourWorkModal.jsx';
+import ApiKeyModal from './components/ApiKeyModal.jsx';
+import { runClientPipeline } from './pipeline/orchestrator.js';
+import { getGeminiApiKey } from './services/geminiService.js';
 
 export default function App() {
   const [viewState, setViewState] = useState('upload'); // 'upload' | 'progress' | 'report'
   const [reportData, setReportData] = useState(null);
   const [showWorkModal, setShowWorkModal] = useState(false);
-  const [systemHealth, setSystemHealth] = useState(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [pipelineProgress, setPipelineProgress] = useState({ step: 1, name: '' });
 
   useEffect(() => {
-    // Check backend offline health status
-    fetch('http://localhost:8000/health')
-      .then((res) => res.json())
-      .then((data) => setSystemHealth(data))
-      .catch((err) => {
-        console.warn('Backend server check:', err);
-        setSystemHealth({ status: 'offline_ready' });
-      });
+    const key = getGeminiApiKey();
+    setHasApiKey(Boolean(key && key.trim()));
   }, []);
 
   const handleStartAudit = async ({ primaryFile, secondaryFile, mode }) => {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      setShowApiKeyModal(true);
+      setErrorMsg('Please enter your Google Gemini API Key to run the autonomous audit pipeline.');
+      return;
+    }
+
     setViewState('progress');
     setErrorMsg(null);
 
-    const formData = new FormData();
-    formData.append('file_primary', primaryFile);
-    if (secondaryFile) {
-      formData.append('file_secondary', secondaryFile);
-    }
-    formData.append('mode', mode);
-
     try {
-      const response = await fetch('http://localhost:8000/analyze', {
-        method: 'POST',
-        body: formData,
+      const report = await runClientPipeline({
+        primaryFile,
+        secondaryFile,
+        mode,
+        onProgress: (step, name) => {
+          setPipelineProgress({ step, name });
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`Server returned status ${response.status}`);
-      }
-
-      const report = await response.json();
       setReportData(report);
       setViewState('report');
     } catch (err) {
       console.error('Audit execution error:', err);
-      setErrorMsg('Audit execution error. Ensure backend is running on port 8000.');
+      setErrorMsg(err.message || 'Audit execution encountered an error. Please check your Gemini API key.');
       setViewState('upload');
     }
   };
@@ -64,7 +62,7 @@ export default function App() {
       {/* Top Navigation Bar */}
       <header style={{
         borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(7, 9, 14, 0.8)',
+        background: 'rgba(7, 9, 14, 0.85)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
         top: 0,
@@ -74,7 +72,7 @@ export default function App() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={handleReset}>
           <div style={{
             width: '36px',
             height: '36px',
@@ -97,26 +95,28 @@ export default function App() {
           </div>
         </div>
 
-        {/* Offline Badge & Local Telemetry */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div
-            className="mono"
+        {/* API Key Status & Configuration Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button
+            onClick={() => setShowApiKeyModal(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               padding: '6px 14px',
               borderRadius: '9999px',
-              fontSize: '0.75rem',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: 'var(--accent-emerald)',
-              fontWeight: 600
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: hasApiKey ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.15)',
+              border: hasApiKey ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.4)',
+              color: hasApiKey ? 'var(--accent-emerald)' : '#fbbf24',
+              transition: 'all 0.2s ease'
             }}
           >
-            <WifiOff size={14} />
-            <span>AIR-GAPPED LOCAL INFERENCE</span>
-          </div>
+            <Key size={14} />
+            <span>{hasApiKey ? 'GEMINI API CONNECTED' : 'SET GEMINI API KEY'}</span>
+          </button>
         </div>
       </header>
 
@@ -124,7 +124,7 @@ export default function App() {
       <main style={{ flex: 1, padding: '40px 24px' }}>
         {errorMsg && (
           <div className="glass-panel" style={{
-            maxWidth: '720px',
+            maxWidth: '780px',
             margin: '0 auto 24px',
             padding: '16px 20px',
             border: '1px solid var(--accent-rose)',
@@ -134,13 +134,13 @@ export default function App() {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <AlertCircle size={20} />
+            <AlertCircle size={20} style={{ flexShrink: 0 }} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {viewState === 'upload' && <UploadView onStartAudit={handleStartAudit} />}
-        {viewState === 'progress' && <ProgressView />}
+        {viewState === 'progress' && <ProgressView progress={pipelineProgress} />}
         {viewState === 'report' && reportData && (
           <ReportView
             report={reportData}
@@ -158,6 +158,13 @@ export default function App() {
         />
       )}
 
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onKeySaved={(key) => setHasApiKey(Boolean(key && key.trim()))}
+      />
+
       {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--border-subtle)',
@@ -166,7 +173,7 @@ export default function App() {
         fontSize: '0.8rem',
         color: 'var(--text-muted)'
       }}>
-        BluePrint Sentinel — Intellect Hack 2026 (Track 1) | Zero-Cloud Infrastructure Auditing
+        BluePrint Sentinel • Powered by Google Gemini Multimodal AI • Client-Side Infrastructure Audit Engine
       </footer>
     </div>
   );

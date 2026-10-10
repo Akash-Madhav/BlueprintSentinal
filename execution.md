@@ -1,67 +1,39 @@
 # BluePrint Sentinel Execution Guide
 
-This document covers the setup, execution, and verification steps for the BluePrint Sentinel system.
+BluePrint Sentinel is a modern, standalone web application that executes an autonomous five-layer infrastructure plan audit pipeline (classify → extract → codified rule verification → AI reasoning → cross-verification & resilience grading) using Google Gemini Multimodal AI.
 
-## Setup
+## Setup & Running the Application
 
-1. **Create and activate a virtual environment:**
-   ```bash
-   # Windows
-   python -m venv .venv
-   .\.venv\Scripts\activate
-
-   # macOS / Linux
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-2. **Install backend dependencies:**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   cd ..
-   ```
-
-3. **Download Models:**
-   Run the setup script to download the required LLM, vision, and OCR models into the `models/` directory:
-   ```bash
-   python scripts/download_models.py
-   ```
-
-4. **Install frontend dependencies:**
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-## Running the Application
-
-### 1. Start the Backend (FastAPI)
-The backend runs on Python and provides the API for the application.
+### 1. Install Dependencies
 ```bash
-uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+cd frontend
+npm install
 ```
-or simply:
-```bash
-python -m backend.main
-```
-The API will be available at `http://localhost:8000`.
 
-### 2. Start the Frontend (React + Vite)
-In a new terminal window:
+### 2. Configure Your Google Gemini API Key
+You can configure your Google API Key in either of two ways:
+1. **Via Environment Variable:**
+   Create a `frontend/.env` file:
+   ```env
+   VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+2. **Via Application Interface:**
+   Launch the app and click the **SET GEMINI API KEY** button in the top navigation bar to enter and validate your key directly in the browser (persisted securely in `localStorage`).
+
+### 3. Start the Application
 ```bash
 cd frontend
 npm run dev
 ```
-The frontend will typically be available at `http://localhost:5173`.
 
-## Verifying Offline Capabilities
+The application will be live at `http://localhost:5173`.
 
-Before a demo, you can verify that the system is fully capable of running offline (without making any external network API calls):
+---
 
-```bash
-python scripts/verify_offline.py
-```
+## Testing the Application
 
-This script will disable outbound network access for the process and run the full pipeline against a sample from `data/samples/` end-to-end to ensure it completes and produces a valid report without external dependencies.
+1. Open `http://localhost:5173` in your browser.
+2. Click **"Load Official Test Scenario"** to instantly load the paired Architectural Floor Plan and Electrical Schematic.
+3. Select your audit mode (**Inspector Mode** or **Adversarial Red-Team Mode**).
+4. Click **"Execute Autonomous 5-Layer Infrastructure Audit"**.
+5. Explore the interactive visual blueprint inspector with SVG bounding box overlays, resilience scorecard (0-100 & Grade), itemized code citations (NFPA, IBC, NEC, IEEE), and export capabilities (JSON & Markdown).
