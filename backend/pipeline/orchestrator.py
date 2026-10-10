@@ -22,6 +22,8 @@ def run_pipeline(
     primary_image_path: str,
     secondary_image_path: Optional[str] = None,
     mode: Literal["inspector", "adversarial"] = "inspector",
+    primary_image_url: Optional[str] = None,
+    secondary_image_url: Optional[str] = None,
 ) -> FinalReport:
     """
     Executes the five-layer audit pipeline across one or two input documents.
@@ -32,6 +34,8 @@ def run_pipeline(
     intermediate_data: Dict[str, Any] = {
         "session_id": session_id,
         "mode": mode,
+        "primary_image_url": primary_image_url,
+        "secondary_image_url": secondary_image_url,
         "layer1": {},
         "layer2": {},
         "layer3": {},
@@ -84,6 +88,9 @@ def run_pipeline(
         reasoning_findings=reasoning_findings,
         second_graph=secondary_graph,
     )
+
+    final_report.primary_image_url = primary_image_url
+    final_report.secondary_image_url = secondary_image_url
     intermediate_data["layer5"]["report"] = final_report.model_dump()
 
     # Store for intermediate queries
@@ -98,3 +105,10 @@ def get_session_layer_data(session_id: str, layer_num: int) -> Optional[Dict[str
         return None
     layer_key = f"layer{layer_num}"
     return session.get(layer_key)
+
+
+def get_session_report(session_id: str) -> Optional[Dict[str, Any]]:
+    session = SESSION_STORE.get(session_id)
+    if not session:
+        return None
+    return session.get("layer5", {}).get("report")

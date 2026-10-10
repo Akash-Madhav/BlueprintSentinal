@@ -16,11 +16,16 @@ from backend.tests.test_layer3_rules import (
     test_egress_01_failing_too_many_intermediate_rooms,
     test_egress_02_passing,
     test_egress_02_failing,
+    test_egress_03_dead_end_failing,
+    test_egress_04_door_capacity_failing,
     test_elec_01_passing,
     test_elec_01_failing_shared_panel,
     test_elec_02_overload,
+    test_elec_03_unprotected_critical,
+    test_elec_04_cascaded_oversubscription,
     test_net_01_spof,
-    test_layer3_orchestration,
+    test_net_02_scada_unsegmented,
+    test_orchestration_all_rules,
 )
 from backend.tests.test_orchestrator import (
     test_full_pipeline_single_plan,
@@ -44,20 +49,35 @@ class TestLayer3Rules(unittest.TestCase):
     def test_05_egress_02_failing(self):
         test_egress_02_failing()
 
-    def test_06_elec_01_passing(self):
+    def test_06_egress_03_dead_end(self):
+        test_egress_03_dead_end_failing()
+
+    def test_07_egress_04_door_capacity(self):
+        test_egress_04_door_capacity_failing()
+
+    def test_08_elec_01_passing(self):
         test_elec_01_passing()
 
-    def test_07_elec_01_failing(self):
+    def test_09_elec_01_failing(self):
         test_elec_01_failing_shared_panel()
 
-    def test_08_elec_02_overload(self):
+    def test_10_elec_02_overload(self):
         test_elec_02_overload()
 
-    def test_09_net_01_spof(self):
+    def test_11_elec_03_unprotected(self):
+        test_elec_03_unprotected_critical()
+
+    def test_12_elec_04_cascaded(self):
+        test_elec_04_cascaded_oversubscription()
+
+    def test_13_net_01_spof(self):
         test_net_01_spof()
 
-    def test_10_orchestration(self):
-        test_layer3_orchestration()
+    def test_14_net_02_scada_unsegmented(self):
+        test_net_02_scada_unsegmented()
+
+    def test_15_orchestration(self):
+        test_orchestration_all_rules()
 
 
 class TestFullPipeline(unittest.TestCase):
