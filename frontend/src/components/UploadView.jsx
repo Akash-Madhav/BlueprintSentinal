@@ -1,16 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Zap, ShieldAlert, CheckCircle2, Eye, X, Sparkles, ShieldCheck } from 'lucide-react';
+import { Upload, FileText, Zap, ShieldAlert, CheckCircle2, Eye, X, Sparkles, ShieldCheck, Key, Cpu } from 'lucide-react';
+import { AVAILABLE_MODELS, getActiveModel, setActiveModel } from '../services/geminiService';
 
-export default function UploadView({ onStartAudit }) {
+export default function UploadView({ onStartAudit, hasApiKey, onOpenApiKeyModal }) {
   const [primaryFile, setPrimaryFile] = useState(null);
   const [primaryPreview, setPrimaryPreview] = useState(null);
   const [secondaryFile, setSecondaryFile] = useState(null);
   const [secondaryPreview, setSecondaryPreview] = useState(null);
   const [mode, setMode] = useState('adversarial'); // 'inspector' | 'adversarial'
+  const [selectedModel, setSelectedModelState] = useState(getActiveModel());
   const [loadingDemo, setLoadingDemo] = useState(false);
 
   const primaryInputRef = useRef(null);
   const secondaryInputRef = useRef(null);
+
+  const handleModelChange = (modelId) => {
+    setSelectedModelState(modelId);
+    setActiveModel(modelId);
+  };
 
   const setPrimaryWithPreview = (file) => {
     setPrimaryFile(file);
@@ -45,7 +52,6 @@ export default function UploadView({ onStartAudit }) {
   const loadDemoSet = async () => {
     setLoadingDemo(true);
     try {
-      // Fetch genuine blueprint samples served directly by Vite from public/samples
       const resP = await fetch('/samples/demo_floor_plan_office.png');
       const blobP = await resP.blob();
       const fileP = new File([blobP], 'demo_floor_plan_office.png', { type: 'image/png' });
@@ -77,7 +83,7 @@ export default function UploadView({ onStartAudit }) {
   return (
     <div style={{ maxWidth: '980px', margin: '0 auto' }}>
       {/* Hero Header */}
-      <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -92,7 +98,7 @@ export default function UploadView({ onStartAudit }) {
           marginBottom: '16px',
           letterSpacing: '0.04em'
         }}>
-          <Sparkles size={14} /> AUTONOMOUS AIR-GAPPED VERIFICATION ENGINE
+          <Sparkles size={14} /> MULTIMODAL INFRASTRUCTURE VERIFICATION PIPELINE
         </div>
         <h1 style={{
           fontSize: '2.5rem',
@@ -103,13 +109,61 @@ export default function UploadView({ onStartAudit }) {
           marginBottom: '12px',
           letterSpacing: '-0.02em'
         }}>
-          Critical Infrastructure Security & Egress Audit
+          Autonomous Infrastructure Plan Audit
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '680px', margin: '0 auto', lineHeight: 1.6 }}>
-          Five-layer multi-discipline pipeline running strictly on local hardware.
-          Audits life-safety egress codes, electrical single-point redundancy, and cross-discipline cascade vulnerabilities.
+          Direct client-to-model five-layer verification powered by Google Gemini Multimodal AI.
+          Evaluates life-safety egress codes, electrical single-point redundancy, and cross-discipline cascade vulnerabilities.
         </p>
       </div>
+
+      {/* API Key Setup Warning Banner if Key Missing */}
+      {!hasApiKey && (
+        <div
+          onClick={onOpenApiKeyModal}
+          className="glass-panel"
+          style={{
+            padding: '16px 20px',
+            marginBottom: '24px',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+            background: 'rgba(245, 158, 11, 0.08)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            borderRadius: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Key size={22} color="#fbbf24" style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fbbf24' }}>
+                Google Gemini API Key Required
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Click here to connect your Google API key to enable direct multimodal blueprint analysis.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              background: '#f59e0b',
+              color: '#040711',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Configure Key
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Upload Cards Grid */}
@@ -292,59 +346,97 @@ export default function UploadView({ onStartAudit }) {
             }}
           >
             <Sparkles size={14} color="var(--accent-cyan)" />
-            {loadingDemo ? 'Fetching Official Samples...' : 'Load Official Test Scenario (Floor Plan + Electrical)'}
+            {loadingDemo ? 'Loading Official Samples...' : 'Load Official Test Scenario (Floor Plan + Electrical)'}
           </button>
         </div>
 
-        {/* Mode Selector */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '16px' }}>
-            Analysis Engine Strategy:
+        {/* Configuration: Mode & Model Selector Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          {/* Analysis Strategy Selector */}
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '14px' }}>
+              Analysis Engine Strategy:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div
+                onClick={() => setMode('inspector')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  border: mode === 'inspector' ? '2px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                  background: mode === 'inspector' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <ShieldCheck size={18} color="var(--accent-cyan)" />
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Inspector Mode</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  Codified municipal inspector. Evaluates fire safety (NFPA 101, IBC) and branch circuit regulations.
+                </div>
+              </div>
+
+              <div
+                onClick={() => setMode('adversarial')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  border: mode === 'adversarial' ? '2px solid var(--accent-rose)' : '1px solid var(--border-subtle)',
+                  background: mode === 'adversarial' ? 'rgba(244, 63, 94, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <ShieldAlert size={18} color="var(--accent-rose)" />
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Adversarial Red-Team Mode</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  Simulates threat actors searching for evacuation choke points, entrapment, and power cascade collapse.
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            {/* Inspector Mode */}
-            <div
-              onClick={() => setMode('inspector')}
-              style={{
-                padding: '18px',
-                borderRadius: '10px',
-                border: mode === 'inspector' ? '2px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
-                background: mode === 'inspector' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <ShieldCheck size={20} color="var(--accent-cyan)" />
-                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Inspector Mode</span>
-              </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Simulates a rigorous municipal code compliance inspector. Flags fire safety code violations (NFPA 101, IBC),
-                clearance requirements, and electrical standards.
-              </p>
+          {/* Google Gemini Model Selection */}
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <Cpu size={18} color="var(--accent-cyan)" />
+              <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>Google Gemini Model:</span>
             </div>
-
-            {/* Adversarial Red-Team Mode */}
-            <div
-              onClick={() => setMode('adversarial')}
-              style={{
-                padding: '18px',
-                borderRadius: '10px',
-                border: mode === 'adversarial' ? '2px solid var(--accent-rose)' : '1px solid var(--border-subtle)',
-                background: mode === 'adversarial' ? 'rgba(244, 63, 94, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <ShieldAlert size={20} color="var(--accent-rose)" />
-                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Adversarial Red-Team Mode</span>
-              </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Simulates an active threat actor seeking structural single points of failure, evacuation choke point sabotage,
-                and power cascade collapse vectors.
-              </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {AVAILABLE_MODELS.map((m) => {
+                const isSelected = selectedModel === m.id;
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => handleModelChange(m.id)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      border: isSelected ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                      background: isSelected ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="mono" style={{ fontWeight: 700, fontSize: '0.85rem', color: isSelected ? 'var(--accent-cyan)' : 'var(--text-primary)' }}>
+                        {m.name}
+                      </span>
+                      {isSelected && <span className="badge badge-medium" style={{ fontSize: '0.65rem' }}>ACTIVE</span>}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      {m.desc}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

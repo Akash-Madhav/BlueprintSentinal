@@ -6,6 +6,20 @@
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
+export const AVAILABLE_MODELS = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Recommended: Ultra-fast multimodal vision & reasoning' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Deep multi-discipline contextual reasoning' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', desc: 'High-speed multimodal inference' },
+];
+
+export function getActiveModel() {
+  return localStorage.getItem('gemini_model') || DEFAULT_GEMINI_MODEL;
+}
+
+export function setActiveModel(modelId) {
+  localStorage.setItem('gemini_model', modelId);
+}
+
 /**
  * Retrieves the currently active Google Gemini API Key from:
  * 1. localStorage (user entered in UI)
@@ -18,6 +32,7 @@ export function getGeminiApiKey() {
   }
   return import.meta.env.VITE_GEMINI_API_KEY || '';
 }
+
 
 /**
  * Persists the user's Gemini API key to localStorage.
@@ -77,7 +92,7 @@ export async function generateGeminiContent({
   prompt,
   systemInstruction = '',
   images = [], // Array of { data: base64String, mimeType: 'image/png' }
-  model = DEFAULT_GEMINI_MODEL,
+  model = null,
   responseSchema = null,
 }) {
   const apiKey = getGeminiApiKey();
@@ -85,7 +100,8 @@ export async function generateGeminiContent({
     throw new Error('Google Gemini API Key is missing. Please enter your API key in the top navigation bar.');
   }
 
-  const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`;
+  const selectedModel = model || getActiveModel();
+  const url = `${GEMINI_API_BASE}/${selectedModel}:generateContent?key=${apiKey}`;
 
   const parts = [];
 

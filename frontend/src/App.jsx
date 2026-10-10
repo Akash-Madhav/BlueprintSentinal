@@ -139,7 +139,13 @@ export default function App() {
           </div>
         )}
 
-        {viewState === 'upload' && <UploadView onStartAudit={handleStartAudit} />}
+        {viewState === 'upload' && (
+          <UploadView
+            onStartAudit={handleStartAudit}
+            hasApiKey={hasApiKey}
+            onOpenApiKeyModal={() => setShowApiKeyModal(true)}
+          />
+        )}
         {viewState === 'progress' && <ProgressView progress={pipelineProgress} />}
         {viewState === 'report' && reportData && (
           <ReportView
